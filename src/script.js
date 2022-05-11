@@ -20,7 +20,8 @@ const scene = new THREE.Scene()
 const dinoParam = {
   size: [1, 2, 1],
   position: [0, 1, 0],
-  color: 0x96d35f,
+  lightColor: 0xa7c957,
+  darkColor: 0x6a994e,
   eyeSize: [0.1, 0.2, 0.1],
   leftEyePosition: [-0.125, 0.5, 0.5],
   rightEyePosition: [0.125, 0.5, 0.5]
@@ -31,14 +32,16 @@ scene.add(dino)
 
 // body
 const dinoBodyGeometry = new THREE.BoxGeometry(...dinoParam.size)
-const dinoBodyMaterial = new THREE.MeshPhongMaterial({color: dinoParam.color})
+const dinoBodyMaterial = new THREE.MeshPhongMaterial({color: dinoParam.lightColor, emissive: dinoParam.darkColor, specular: 0x000000})
 const dinoBody = new THREE.Mesh(dinoBodyGeometry, dinoBodyMaterial)
+
+dinoBody.castShadow = true
 
 dino.add(dinoBody)
 
 // eyes
 const eyeGeometry = new THREE.BoxGeometry(...dinoParam.eyeSize)
-const eysMaterial = new THREE.MeshPhongMaterial({color: 0xffffff})
+const eysMaterial = new THREE.MeshPhongMaterial({color: 0xffffff, emissive: 0xffffff, specular: 0x000000})
 const leftEye = new THREE.Mesh(eyeGeometry, eysMaterial)
 const rightEye = new THREE.Mesh(eyeGeometry, eysMaterial)
 
@@ -53,13 +56,15 @@ dino.position.set(...dinoParam.position)
 // Ground
 const groundParam = {
   size: 100,
-  color: 0xfeaf1c
+  lightColor: 0xfaedcd,
+  darkColor: 0xffeedd
 }
 
 const groundGeometry = new THREE.PlaneGeometry(groundParam.size, groundParam.size)
-const groundMaterial = new THREE.MeshPhongMaterial({color: groundParam.color})
+const groundMaterial = new THREE.MeshPhongMaterial({color: groundParam.lightColor, emissive: groundParam.darkColor, specular: 0x000000})
 const ground = new THREE.Mesh(groundGeometry, groundMaterial)
 
+ground.receiveShadow = true
 ground.rotation.x = Math.PI * -.5
 
 scene.add(ground)
@@ -68,33 +73,45 @@ scene.add(ground)
 /**
  * Light
  */
-
-// Point Light
-// const pointLight = new THREE.PointLight(0xffffff, 1)
-// pointLight.position.set(0,4,2)
-// scene.add(pointLight)
-
-// const lightFolder = gui.addFolder('pointLight')
-
-// lightFolder.add(pointLight.position, 'x').min(-10).max(10).step(0.5)
-// lightFolder.add(pointLight.position, 'y').min(-10).max(10).step(0.5)
-// lightFolder.add(pointLight.position, 'z').min(-10).max(10).step(0.5)
-// lightFolder.add(pointLight, 'intensity').min(0).max(10).step(0.5)
-
-// const pointLightColor = {
-//   color: 0xffffff
-// }
-
-// lightFolder.addColor(pointLightColor, 'color')
-//   .onChange(() => {
-//     pointLight.color.set(pointLightColor.color)
-//   })
-
-// Ambient Light
 const color = 0xFFFFFF;
 const intensity = 1;
-const light = new THREE.AmbientLight(color, intensity);
-scene.add(light);
+const light = new THREE.DirectionalLight(color, intensity)
+
+light.castShadow = true
+light.position.set(3, 8, 2)
+light.target.position.set(-5, 0, 0)
+scene.add(light)
+scene.add(light.target)
+
+const helper = new THREE.DirectionalLightHelper(light)
+scene.add(helper)
+
+// Light GUI
+function makeXYZGUI(gui, vector3, name, onChangeFn) {
+  const folder = gui.addFolder(name)
+  folder.add(vector3, 'x', -100, 100).onChange(onChangeFn)
+  folder.add(vector3, 'y', 0, 100).onChange(onChangeFn)
+  folder.add(vector3, 'z', -100, 100).onChange(onChangeFn)
+  folder.open()
+}
+
+function updateLight() {
+  light.target.updateMatrixWorld()
+  helper.update()
+}
+updateLight();
+
+const colorGUIHelper = {
+  color: 0xffffff
+}
+
+gui.addColor(colorGUIHelper, 'color').onChange(() => {
+  light.color.set(colorGUIHelper.color)
+})
+gui.add(light, 'intensity', 0, 2, 0.01)
+makeXYZGUI(gui, light.position, 'position', updateLight)
+makeXYZGUI(gui, light.target.position, 'target', updateLight)
+
 
 /**
  * Helpers
@@ -161,11 +178,10 @@ scene.add(camera)
 /**
  * Renderer
  */
-const renderer = new THREE.WebGLRenderer({
-  canvas: canvas
-})
+const renderer = new THREE.WebGLRenderer({canvas: canvas})
 
-renderer.setClearColor(0x87ceeb)
+renderer.shadowMap.enabled = true
+renderer.setClearColor(0x70d6ff)
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
