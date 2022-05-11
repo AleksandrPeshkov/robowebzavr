@@ -19,7 +19,7 @@ const scene = new THREE.Scene()
 // Dino
 const dinoParam = {
   size: [1, 2, 1],
-  position: [0, 0.5, 0],
+  position: [0, 1, 0],
   color: 0x96d35f,
   eyeSize: [0.1, 0.2, 0.1],
   leftEyePosition: [-0.125, 0.5, 0.5],
@@ -52,41 +52,49 @@ dino.position.set(...dinoParam.position)
 
 // Ground
 const groundParam = {
-  size: [100, 100],
-  position: [0, 0, 0],
-  color: 0xfeaf1c,
-  rotateX: -1.5708
+  size: 100,
+  color: 0xfeaf1c
 }
 
-const groundGeometry = new THREE.PlaneGeometry(...groundParam.size)
+const groundGeometry = new THREE.PlaneGeometry(groundParam.size, groundParam.size)
 const groundMaterial = new THREE.MeshPhongMaterial({color: groundParam.color})
 const ground = new THREE.Mesh(groundGeometry, groundMaterial)
 
-ground.rotateX(groundParam.rotateX)
+ground.rotation.x = Math.PI * -.5
 
 scene.add(ground)
 
 
-// Lights
-const pointLight = new THREE.PointLight(0xffffff, 1)
-pointLight.position.set(0,4,2)
-scene.add(pointLight)
+/**
+ * Light
+ */
 
-const lightFolder = gui.addFolder('pointLight')
+// Point Light
+// const pointLight = new THREE.PointLight(0xffffff, 1)
+// pointLight.position.set(0,4,2)
+// scene.add(pointLight)
 
-lightFolder.add(pointLight.position, 'x').min(-10).max(10).step(0.5)
-lightFolder.add(pointLight.position, 'y').min(-10).max(10).step(0.5)
-lightFolder.add(pointLight.position, 'z').min(-10).max(10).step(0.5)
-lightFolder.add(pointLight, 'intensity').min(0).max(10).step(0.5)
+// const lightFolder = gui.addFolder('pointLight')
 
-const pointLightColor = {
-    color: 0xffffff
-}
+// lightFolder.add(pointLight.position, 'x').min(-10).max(10).step(0.5)
+// lightFolder.add(pointLight.position, 'y').min(-10).max(10).step(0.5)
+// lightFolder.add(pointLight.position, 'z').min(-10).max(10).step(0.5)
+// lightFolder.add(pointLight, 'intensity').min(0).max(10).step(0.5)
 
-lightFolder.addColor(pointLightColor, 'color')
-  .onChange(() => {
-    pointLight.color.set(pointLightColor.color)
-  })
+// const pointLightColor = {
+//   color: 0xffffff
+// }
+
+// lightFolder.addColor(pointLightColor, 'color')
+//   .onChange(() => {
+//     pointLight.color.set(pointLightColor.color)
+//   })
+
+// Ambient Light
+const color = 0xFFFFFF;
+const intensity = 1;
+const light = new THREE.AmbientLight(color, intensity);
+scene.add(light);
 
 /**
  * Helpers
@@ -131,15 +139,12 @@ window.addEventListener('resize', () => {
 /**
  * Camera
  */
-
-// Base camera
-
 const cameraOptions = {
-  fov: 75,
+  fov: 45,
   near: 0.1,
   far: 50,
-  position: [0, 3, 3],
-  look: [0, 0.5, 0]
+  position: [0, 10, 20],
+  look: [0, 1, 0]
 }
 
 const camera = new THREE.PerspectiveCamera(cameraOptions.fov, sizes.width / sizes.height, cameraOptions.near, cameraOptions.far)
@@ -160,6 +165,7 @@ const renderer = new THREE.WebGLRenderer({
   canvas: canvas
 })
 
+renderer.setClearColor(0x87ceeb)
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
