@@ -16,29 +16,54 @@ const canvas = document.getElementById('app')
 const scene = new THREE.Scene()
 
 
-// Objects
-const dino = new THREE.BoxGeometry(1, 1, 1)
-const plane = new THREE.PlaneGeometry(100, 100)
+// Dino
+const dinoParam = {
+  size: [1, 2, 1],
+  position: [0, 0.5, 0],
+  color: 0x96d35f,
+  eyeSize: [0.1, 0.2, 0.1],
+  leftEyePosition: [-0.125, 0.5, 0.5],
+  rightEyePosition: [0.125, 0.5, 0.5]
+}
+
+const dino = new THREE.Object3D();
+scene.add(dino)
+
+// body
+const dinoBodyGeometry = new THREE.BoxGeometry(...dinoParam.size)
+const dinoBodyMaterial = new THREE.MeshPhongMaterial({color: dinoParam.color})
+const dinoBody = new THREE.Mesh(dinoBodyGeometry, dinoBodyMaterial)
+
+dino.add(dinoBody)
+
+// eyes
+const eyeGeometry = new THREE.BoxGeometry(...dinoParam.eyeSize)
+const eysMaterial = new THREE.MeshPhongMaterial({color: 0xffffff})
+const leftEye = new THREE.Mesh(eyeGeometry, eysMaterial)
+const rightEye = new THREE.Mesh(eyeGeometry, eysMaterial)
+
+leftEye.position.set(...dinoParam.leftEyePosition)
+rightEye.position.set(...dinoParam.rightEyePosition)
+
+dino.add(leftEye, rightEye)
+
+dino.position.set(...dinoParam.position)
 
 
-// Materials
-const dinoMaterial = new THREE.MeshPhongMaterial({
-  color: 0x96d35f
-})
+// Ground
+const groundParam = {
+  size: [100, 100],
+  position: [0, 0, 0],
+  color: 0xfeaf1c,
+  rotateX: -1.5708
+}
 
-const groundMaterial = new THREE.MeshPhongMaterial({
-  color: 0xfeaf1c
-})
+const groundGeometry = new THREE.PlaneGeometry(...groundParam.size)
+const groundMaterial = new THREE.MeshPhongMaterial({color: groundParam.color})
+const ground = new THREE.Mesh(groundGeometry, groundMaterial)
 
+ground.rotateX(groundParam.rotateX)
 
-// Mesh
-const robozavr = new THREE.Mesh(dino, dinoMaterial)
-robozavr.position.set(0, 0.5, 0)
-
-const ground = new THREE.Mesh(plane, groundMaterial)
-ground.rotateX(-1.5708)
-
-scene.add(robozavr)
 scene.add(ground)
 
 
@@ -76,7 +101,9 @@ scene.add( gridHelper );
 
 // Axis
 const axesHelper = new THREE.AxesHelper(100);
-scene.add( axesHelper );
+// axesHelper.material.depthTest = false;
+// axesHelper.renderOrder = 1;
+scene.add(axesHelper);
 
 
 /**
@@ -106,8 +133,18 @@ window.addEventListener('resize', () => {
  */
 
 // Base camera
-const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 50)
-camera.position.set(0, 2, 5)
+
+const cameraOptions = {
+  fov: 75,
+  near: 0.1,
+  far: 50,
+  position: [0, 3, 3],
+  look: [0, 0.5, 0]
+}
+
+const camera = new THREE.PerspectiveCamera(cameraOptions.fov, sizes.width / sizes.height, cameraOptions.near, cameraOptions.far)
+camera.position.set(...cameraOptions.position)
+camera.lookAt(...cameraOptions.look)
 
 scene.add(camera)
 
@@ -137,7 +174,7 @@ const tick = () => {
   const elapsedTime = clock.getElapsedTime()
 
   // Update objects
-  robozavr.rotation.y = .5 * elapsedTime
+  dino.rotation.y = .5 * elapsedTime
 
   // Update Orbital Controls
   // controls.update()
