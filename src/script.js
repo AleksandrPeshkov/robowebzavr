@@ -1,19 +1,52 @@
 import './style.css'
 import * as THREE from 'three'
-// import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import * as dat from 'dat.gui'
 
 // FPS
-(function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='//mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
+// (function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='//mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
 
 // Debug
 const gui = new dat.GUI()
+gui.close()
+
+class ClearingLogger {
+  constructor(elem) {
+    this.elem = elem
+    this.lines = []
+  }
+  log(...args) {
+    this.lines.push([...args].join(' '))
+  }
+  render() {
+    this.elem.textContent = this.lines.join('\n')
+    this.lines = []
+  }
+}
+
+const logger = new ClearingLogger(document.querySelector('#debug pre'))
 
 // Canvas
 const canvas = document.getElementById('app')
 
 // Scene
 const scene = new THREE.Scene()
+
+/**
+ * Helpers
+ */
+// Grid
+const size = 100;
+const divisions = 100;
+
+const gridHelper = new THREE.GridHelper( size, divisions );
+scene.add( gridHelper );
+
+// Axis
+const axesHelper = new THREE.AxesHelper(100);
+// axesHelper.material.depthTest = false;
+// axesHelper.renderOrder = 1;
+scene.add(axesHelper);
 
 
 // Dino
@@ -114,24 +147,6 @@ makeXYZGUI(gui, light.target.position, 'target', updateLight)
 
 
 /**
- * Helpers
- */
-
-// Grid
-const size = 100;
-const divisions = 100;
-
-const gridHelper = new THREE.GridHelper( size, divisions );
-scene.add( gridHelper );
-
-// Axis
-const axesHelper = new THREE.AxesHelper(100);
-// axesHelper.material.depthTest = false;
-// axesHelper.renderOrder = 1;
-scene.add(axesHelper);
-
-
-/**
  * Sizes
  */
 const sizes = {
@@ -170,9 +185,13 @@ camera.lookAt(...cameraOptions.look)
 
 scene.add(camera)
 
+// Camera shadow helper
+// const cameraHelper = new THREE.CameraHelper(light.shadow.camera);
+// scene.add(cameraHelper);
+
 // Controls
-// const controls = new OrbitControls(camera, canvas)
-// controls.enableDamping = true
+const controls = new OrbitControls(camera, canvas)
+controls.enableDamping = true
 
 
 /**
@@ -181,7 +200,7 @@ scene.add(camera)
 const renderer = new THREE.WebGLRenderer({canvas: canvas})
 
 renderer.shadowMap.enabled = true
-renderer.setClearColor(0x70d6ff)
+renderer.setClearColor(0xa2d2ff)
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
@@ -198,11 +217,14 @@ const tick = () => {
   // Update objects
   dino.rotation.y = .5 * elapsedTime
 
+  logger.log('rotation y:', dino.rotation.y.toFixed(3));
+
   // Update Orbital Controls
-  // controls.update()
+  controls.update()
 
   // Render
   renderer.render(scene, camera)
+  logger.render();
 
   // Call tick again on the next frame
   window.requestAnimationFrame(tick)
